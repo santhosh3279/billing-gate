@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chettiyar Kada | Billing Portal Access</title>
+  <link rel="icon" type="image/svg+xml" href="/gate/assets/favicon.svg">
+  <link rel="shortcut icon" href="/gate/assets/favicon.svg">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.88);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --gold: #f59e0b;
+      --gold-hover: #d97706;
+      --gold-glow: rgba(245, 158, 11, 0.2);
+      --input-bg: #1e293b;
+      --input-border: #334155;
+      --input-focus: #f59e0b;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.12) 0%, transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(30, 58, 138, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(15, 23, 42, 0.8) 0%, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+    }
+    .wrapper {
+      width: 100%;
+      max-width: 460px;
+    }
+    .brand-header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .brand-logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(17, 24, 39, 0.8) 100%);
+      border: 2px solid rgba(245, 158, 11, 0.35);
+      box-shadow: 0 0 25px var(--gold-glow);
+      margin-bottom: 0.85rem;
+      padding: 8px;
+    }
+    .brand-logo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .brand-title {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 30%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .brand-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.3rem;
+      letter-spacing: 0.02em;
+    }
+    .badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      background: rgba(245, 158, 11, 0.1);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+    .badge-icon {
+      width: 12px;
+      height: 12px;
+    }
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 1.25rem;
+      padding: 2rem 1.85rem;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
+    }
+    .card-header {
+      margin-bottom: 1.5rem;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+    .nav-tabs {
+      display: flex;
+      border-radius: 0.6rem;
+      background: #0f172a;
+      padding: 4px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.55rem 0.5rem;
+      border-radius: 0.45rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+    .tab-btn.active {
+      background: #1e293b;
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .tab-btn:hover:not(.active) {
+      color: #cbd5e1;
+    }
+    .alert {
+      padding: 0.85rem 1rem;
+      border-radius: 0.65rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      line-height: 1.4;
+    }
+    .alert-error {
+      background: var(--danger-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+    }
+    .alert-success {
+      background: var(--success-bg);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #6ee7b7;
+    }
+    .alert-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: 1px;
+    }
+    .form-group {
+      margin-bottom: 1.15rem;
+    }
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 0.45rem;
+    }
+    .form-label-badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--gold);
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      width: 18px;
+      height: 18px;
+      color: #64748b;
+      pointer-events: none;
+      transition: color 0.2s ease;
+    }
+    .form-control {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      color: #fff;
+      border-radius: 0.65rem;
+      padding: 0.75rem 1rem 0.75rem 2.65rem;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .form-control:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px var(--gold-glow);
+    }
+    .form-control:focus + .input-icon,
+    .form-control:focus ~ .input-icon {
+      color: var(--gold);
+    }
+    .form-control.totp-input {
+      font-family: "Courier New", Courier, monospace, monospace;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      text-align: center;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    .toggle-pass-btn {
+      position: absolute;
+      right: 0.85rem;
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 4px;
+      transition: color 0.2s ease;
+    }
+    .toggle-pass-btn:hover {
+      color: #cbd5e1;
+    }
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      border: none;
+      color: #0f172a;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 0.65rem;
+      padding: 0.85rem 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+      transition: all 0.2s ease;
+      margin-top: 1.4rem;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 0.65rem;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      margin-top: 0.75rem;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(15, 23, 42, 0.25);
+      border-top-color: #0f172a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .qr-container {
+      background: #ffffff;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      display: inline-block;
+      margin: 1rem auto;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+    .qr-image {
+      display: block;
+      width: 200px;
+      height: 200px;
+    }
+    .secret-box {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 0.5rem;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin: 0.85rem 0;
+    }
+    .secret-code {
+      font-family: monospace;
+      font-size: 0.95rem;
+      color: #fbbf24;
+      letter-spacing: 0.08em;
+      word-break: break-all;
+    }
+    .btn-copy {
+      background: #1e293b;
+      border: 1px solid #475569;
+      color: #cbd5e1;
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-copy:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .steps-list {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      padding-left: 1.2rem;
+    }
+    .steps-list li {
+      margin-bottom: 0.35rem;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 1.75rem;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .footer a {
+      color: #94a3b8;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      color: var(--gold);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrapper">
+    <!-- Brand Header -->
+    <div class="brand-header">
+      <div class="brand-logo-container">
+        <img src="/gate/assets/logo.png" alt="Chettiyar Kada Logo" class="brand-logo">
+      </div>
+      <h1 class="brand-title">Chettiyar Kada</h1>
+      <p class="brand-subtitle">Enterprise Billing & Retail Access Portal</p>
+      <div class="badges">
+        <span class="badge">
+          <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          Google Authenticator 2FA
+        </span>
+        <span class="badge">
+          <svg class="badge-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          Protected Staff Gate
+        </span>
+      </div>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="card">
+      
+      <!-- Navigation Tabs -->
+      <div class="nav-tabs" id="navTabs">
+        <button class="tab-btn active" id="tabLogin" onclick="switchView('login')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+          </svg>
+          Sign In
+        </button>
+        <button class="tab-btn" id="tabSetup" onclick="switchView('setup')">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+          </svg>
+          Enroll 2FA
+        </button>
+      </div>
+
+      <!-- Error / Success Alert Display -->
+      <div id="alertBox" style="display: none;"></div>
+
+      <!-- VIEW 1: SIGN IN FORM -->
+      <div id="viewLogin">
+        <div class="card-header">
+          <h2 class="card-title">Staff Authentication</h2>
+          <p class="card-desc">Enter your credentials and Google Authenticator code.</p>
+        </div>
+
+        <form id="formLogin" onsubmit="handleLoginSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="loginUsername">Username</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+              <input type="text" id="loginUsername" class="form-control" placeholder="Enter username" required autocomplete="username" autofocus>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="loginPassword">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <input type="password" id="loginPassword" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('loginPassword', this)">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label">
+              <span>Google Authenticator Code</span>
+              <span class="form-label-badge">6-Digit OTP</span>
+            </div>
+            <div class="input-wrapper">
+              <input type="text" id="loginTotp" class="form-control totp-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnLoginSubmit">
+            <span>Verify & Access Billing</span>
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- VIEW 2: SETUP / ENROLL 2FA FORM -->
+      <div id="viewSetup" style="display: none;">
+        <div id="setupStep1">
+          <div class="card-header">
+            <h2 class="card-title">Enroll Google Authenticator</h2>
+            <p class="card-desc">Verify your staff account to pair your mobile authenticator app.</p>
+          </div>
+
+          <form id="formEnrollVerify" onsubmit="handleEnrollVerify(event)">
+            <div class="form-group">
+              <label class="form-label" for="setupUsername">Username</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <input type="text" id="setupUsername" class="form-control" placeholder="Enter username" required autocomplete="username">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="setupPassword">Password</label>
+              <div class="input-wrapper">
+                <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <input type="password" id="setupPassword" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+                <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('setupPassword', this)">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnEnrollStep1">
+              <span>Generate 2FA QR Code</span>
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 2: Show QR Code and verify first code -->
+        <div id="setupStep2" style="display: none; text-align: center;">
+          <div class="card-header" style="text-align: center;">
+            <h2 class="card-title">Scan QR Code</h2>
+            <p class="card-desc">Scan with Google Authenticator or any TOTP app.</p>
+          </div>
+
+          <div class="qr-container">
+            <img id="qrImage" src="" alt="Google Authenticator QR Code" class="qr-image">
+          </div>
+
+          <div class="secret-box">
+            <span class="secret-code" id="secretCodeText"></span>
+            <button type="button" class="btn-copy" onclick="copySecretKey()">Copy Key</button>
+          </div>
+
+          <ol class="steps-list" style="text-align: left;">
+            <li>Open the <strong>Google Authenticator</strong> app on your mobile device.</li>
+            <li>Tap <strong>+</strong> and choose <strong>Scan a QR code</strong>.</li>
+            <li>Enter the 6-digit code below to confirm setup.</li>
+          </ol>
+
+          <form id="formConfirmTotp" onsubmit="handleConfirmTotp(event)">
+            <div class="form-group">
+              <input type="text" id="confirmTotpCode" class="form-control totp-input" placeholder="000000" maxlength="6" inputmode="numeric" pattern="[0-9]*" required autocomplete="one-time-code">
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnConfirmTotp">
+              <span>Confirm & Activate 2FA</span>
+            </button>
+            <button type="button" class="btn-secondary" onclick="resetSetupStep()">
+              Back
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- VIEW 3: INITIAL ADMIN SETUP (when 0 users registered) -->
+      <div id="viewInitAdmin" style="display: none;">
+        <div class="card-header">
+          <h2 class="card-title">System Initialization</h2>
+          <p class="card-desc">Create your primary administrator account and pair Google Authenticator.</p>
+        </div>
+
+        <form id="formInitAdmin" onsubmit="handleInitAdminSubmit(event)">
+          <div class="form-group">
+            <label class="form-label" for="initUsername">Admin Username</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+              <input type="text" id="initUsername" class="form-control" placeholder="e.g. admin" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="initPassword">Admin Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              <input type="password" id="initPassword" class="form-control" placeholder="Create strong password" required autocomplete="new-password">
+              <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('initPassword', this)">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" id="btnInitAdmin">
+            <span>Proceed to 2FA Pairing</span>
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>&copy; <span id="year"></span> Chettiyar Kada &bull; Palakkad</p>
+      <p style="margin-top: 0.35rem;">Protected by Chettiyar Gatekeeper 2FA Security</p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    let pendingSetupUser = '';
+    let pendingSetupSecret = '';
+
+    // Check URL parameters for return_to or logged_out
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('return_to') || '/';
+    if (urlParams.get('logged_out')) {
+      showAlert('You have been securely signed out.', 'success');
+    }
+
+    // Check system setup status on load
+    async function checkSetupStatus() {
+      try {
+        const res = await fetch('/gate/api/setup-status');
+        const data = await res.json();
+        if (data.needsInitialSetup) {
+          document.getElementById('navTabs').style.display = 'none';
+          document.getElementById('viewLogin').style.display = 'none';
+          document.getElementById('viewSetup').style.display = 'none';
+          document.getElementById('viewInitAdmin').style.display = 'block';
+          showAlert('Initial setup required: Register your administrator account.', 'success');
+        }
+      } catch (err) {
+        console.error('Setup check error:', err);
+      }
+    }
+    checkSetupStatus();
+
+    function switchView(view) {
+      clearAlert();
+      const tabLogin = document.getElementById('tabLogin');
+      const tabSetup = document.getElementById('tabSetup');
+      const viewLogin = document.getElementById('viewLogin');
+      const viewSetup = document.getElementById('viewSetup');
+
+      if (view === 'login') {
+        tabLogin.classList.add('active');
+        tabSetup.classList.remove('active');
+        viewLogin.style.display = 'block';
+        viewSetup.style.display = 'none';
+        document.getElementById('loginUsername').focus();
+      } else {
+        tabSetup.classList.add('active');
+        tabLogin.classList.remove('active');
+        viewLogin.style.display = 'none';
+        viewSetup.style.display = 'block';
+        resetSetupStep();
+        document.getElementById('setupUsername').focus();
+      }
+    }
+
+    function resetSetupStep() {
+      document.getElementById('setupStep1').style.display = 'block';
+      document.getElementById('setupStep2').style.display = 'none';
+      pendingSetupUser = '';
+      pendingSetupSecret = '';
+    }
+
+    function showAlert(message, type = 'error') {
+      const box = document.getElementById('alertBox');
+      const isError = type === 'error';
+      box.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+      const iconSvg = isError 
+        ? `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
+        : `<svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
+      box.innerHTML = `${iconSvg}<div>${escapeHtml(message)}</div>`;
+      box.style.display = 'flex';
+    }
+
+    function clearAlert() {
+      const box = document.getElementById('alertBox');
+      box.style.display = 'none';
+      box.innerHTML = '';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function togglePasswordVisibility(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/></svg>`;
+      } else {
+        input.type = 'password';
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>`;
+      }
+    }
+
+    function copySecretKey() {
+      const code = document.getElementById('secretCodeText').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const copyBtn = document.querySelector('.btn-copy');
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy Key'; }, 2000);
+      });
+    }
+
+    // Auto-advance OTP format
+    document.getElementById('loginTotp').addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9]/g, '');
+    });
+    document.getElementById('confirmTotpCode').addEventListener('input', function(e) {
+      this.value = this.value.replace(/[^0-9]/g, '');
+    });
+
+    // Handle Login Submit
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      clearAlert();
+
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const totpCode = document.getElementById('loginTotp').value.trim();
+      const btn = document.getElementById('btnLoginSubmit');
+
+      if (!username || !password || !totpCode) {
+        showAlert('Please fill in Username, Password, and Google Authenticator code.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div><span>Authenticating...</span>`;
+
+      try {
+        const res = await fetch('/gate/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, totpCode })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          showAlert('Authentication successful! Redirecting...', 'success');
+          setTimeout(() => {
+            window.location.href = data.redirect || returnTo;
+          }, 600);
+        } else {
+          showAlert(data.message || 'Authentication failed.');
+          if (data.retryAfter) {
+            showAlert(`Too many failed attempts. Locked for ${data.retryAfter}s.`);
+          }
+          btn.disabled = false;
+          btn.innerHTML = `<span>Verify & Access Billing</span><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+          document.getElementById('loginTotp').value = '';
+          document.getElementById('loginTotp').focus();
+        }
+      } catch (err) {
+        showAlert('Connection error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = `<span>Verify & Access Billing</span><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+    }
+
+    // Handle Enroll Step 1: Verify user & request QR
+    async function handleEnrollVerify(e) {
+      e.preventDefault();
+      clearAlert();
+
+      const username = document.getElementById('setupUsername').value.trim();
+      const password = document.getElementById('setupPassword').value;
+      const btn = document.getElementById('btnEnrollStep1');
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div><span>Verifying...</span>`;
+
+      try {
+        const res = await fetch('/gate/api/setup-enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          pendingSetupUser = username;
+          pendingSetupSecret = data.secret;
+
+          document.getElementById('qrImage').src = data.qrDataUrl;
+          document.getElementById('secretCodeText').textContent = data.secret;
+          document.getElementById('setupStep1').style.display = 'none';
+          document.getElementById('setupStep2').style.display = 'block';
+          document.getElementById('confirmTotpCode').value = '';
+          document.getElementById('confirmTotpCode').focus();
+        } else {
+          showAlert(data.message || 'Enrollment verification failed.');
+        }
+      } catch (err) {
+        showAlert('Connection error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Generate 2FA QR Code</span><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`;
+      }
+    }
+
+    // Handle Confirm TOTP code
+    async function handleConfirmTotp(e) {
+      e.preventDefault();
+      clearAlert();
+
+      const totpCode = document.getElementById('confirmTotpCode').value.trim();
+      const btn = document.getElementById('btnConfirmTotp');
+
+      if (!totpCode || totpCode.length !== 6) {
+        showAlert('Please enter the 6-digit code shown in Google Authenticator.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div><span>Validating Code...</span>`;
+
+      try {
+        const res = await fetch('/gate/api/setup-verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: pendingSetupUser,
+            secret: pendingSetupSecret,
+            totpCode
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          showAlert('Google Authenticator enrolled successfully! Accessing portal...', 'success');
+          setTimeout(() => {
+            window.location.href = returnTo;
+          }, 800);
+        } else {
+          showAlert(data.message || 'Invalid verification code. Please check your app.');
+          btn.disabled = false;
+          btn.innerHTML = `<span>Confirm & Activate 2FA</span>`;
+          document.getElementById('confirmTotpCode').value = '';
+          document.getElementById('confirmTotpCode').focus();
+        }
+      } catch (err) {
+        showAlert('Connection error. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = `<span>Confirm & Activate 2FA</span>`;
+      }
+    }
+
+    // Handle Initial Admin Setup Submit
+    async function handleInitAdminSubmit(e) {
+      e.preventDefault();
+      clearAlert();
+
+      const username = document.getElementById('initUsername').value.trim();
+      const password = document.getElementById('initPassword').value;
+      const btn = document.getElementById('btnInitAdmin');
+
+      if (!username || !password) {
+        showAlert('Please enter both username and password.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="spinner"></div><span>Initializing...</span>`;
+
+      try {
+        const res = await fetch('/gate/api/setup-init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          pendingSetupUser = username;
+          pendingSetupSecret = data.secret;
+
+          document.getElementById('viewInitAdmin').style.display = 'none';
+          document.getElementById('navTabs').style.display = 'flex';
+          document.getElementById('viewSetup').style.display = 'block';
+          document.getElementById('setupStep1').style.display = 'none';
+          document.getElementById('setupStep2').style.display = 'block';
+
+          document.getElementById('qrImage').src = data.qrDataUrl;
+          document.getElementById('secretCodeText').textContent = data.secret;
+          document.getElementById('confirmTotpCode').value = '';
+          document.getElementById('confirmTotpCode').focus();
+          showAlert('Admin created! Now scan the QR code in Google Authenticator.', 'success');
+        } else {
+          showAlert(data.message || 'Initialization failed.');
+        }
+      } catch (err) {
+        showAlert('Connection error. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Proceed to 2FA Pairing</span><svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>`;
+      }
+    }
+  </script>
+</body>
+</html>

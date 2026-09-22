@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+secret.key
+users.json
+*.key
+*.pem
+
+# Runtime data
+data/
+*.log
+*.tmp
+*.tmp.*
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,22 @@
+[Unit]
+Description=Chettiyar Kada Billing 2FA Auth Gate
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/billing-gate
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=3100
+Environment=DATA_DIR=/var/lib/billing-gate
+StateDirectory=billing-gate
+ExecStart=/usr/bin/node /var/www/billing-gate/server.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
