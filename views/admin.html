@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Control Center | Chettiyar Kada 2FA Gate & Nginx</title>
+  <link rel="icon" type="image/svg+xml" href="/gate/assets/favicon.svg">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(17, 24, 39, 0.92);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dark: #64748b;
+      --gold: #f59e0b;
+      --gold-hover: #d97706;
+      --gold-glow: rgba(245, 158, 11, 0.25);
+      --input-bg: #1e293b;
+      --input-border: #334155;
+      --input-focus: #f59e0b;
+      --danger: #ef4444;
+      --danger-bg: rgba(239, 68, 68, 0.15);
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --info: #3b82f6;
+      --info-bg: rgba(59, 130, 246, 0.15);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 100% 100%, rgba(30, 58, 138, 0.12) 0%, transparent 40%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .nav-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold);
+      padding: 3px;
+      background: #111827;
+      object-fit: contain;
+    }
+    .nav-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+    }
+    .nav-title span {
+      color: var(--gold);
+    }
+    .nav-badge {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      background: var(--gold-glow);
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-weight: 700;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      padding: 0.35rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .user-pill strong {
+      color: var(--text);
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Stats Overview */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 10px var(--success);
+      display: inline-block;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Quick Global Action Bar */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .action-bar-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .action-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.75rem 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      color: var(--text);
+    }
+    .tab-btn.active {
+      color: var(--gold);
+      border-bottom-color: var(--gold);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-hover) 100%);
+      color: #0f172a;
+      box-shadow: 0 2px 10px var(--gold-glow);
+    }
+    .btn-gold:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--input-bg);
+      border-color: var(--input-border);
+      color: var(--text);
+    }
+    .btn-secondary:hover {
+      background: #283548;
+      border-color: #475569;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #064e3b;
+    }
+    .btn-success:hover {
+      filter: brightness(1.1);
+    }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover {
+      filter: brightness(1.1);
+    }
+    .btn-outline-danger {
+      background: transparent;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .btn-outline-danger:hover {
+      background: var(--danger-bg);
+    }
+    .btn-sm {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.88rem;
+    }
+    th {
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-success { background: var(--success-bg); color: var(--success); border: 1px solid var(--success); }
+    .badge-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger); }
+    .badge-gold { background: var(--gold-glow); color: var(--gold); border: 1px solid var(--gold); }
+    .badge-info { background: var(--info-bg); color: var(--info); border: 1px solid var(--info); }
+    .badge-dark { background: var(--input-bg); color: var(--text-muted); border: 1px solid var(--input-border); }
+
+    /* Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .2s;
+      border-radius: 24px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--success); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-content {
+      background: #111827;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+    }
+    .modal-lg {
+      max-width: 960px;
+    }
+    .modal-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+    .modal-body {
+      padding: 1.25rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      background: rgba(15, 23, 42, 0.5);
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .form-control {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 2px var(--gold-glow);
+    }
+    .form-control-mono {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    /* Terminal Window */
+    .terminal-box {
+      background: #030712;
+      border: 1px solid #1f2937;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: #34d399;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 200;
+    }
+    .toast {
+      padding: 0.8rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      animation: slideIn 0.25s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .toast-success { background: #065f46; border: 1px solid #10b981; }
+    .toast-error { background: #881337; border: 1px solid #ef4444; }
+    .toast-info { background: #1e3a8a; border: 1px solid #3b82f6; }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Code editor area */
+    .code-editor-area {
+      min-height: 380px;
+      resize: vertical;
+      background: #090d16;
+      color: #f1f5f9;
+      tab-size: 4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <img src="/gate/assets/logo.png" alt="Logo" class="nav-logo" onerror="this.src='/gate/assets/favicon.svg'">
+      <div>
+        <div class="nav-title">Chettiyar Kada <span>Gate & Nginx Admin</span></div>
+      </div>
+      <span class="nav-badge">Superadmin</span>
+    </div>
+    <div class="nav-actions">
+      <div class="user-pill">
+        <span>Logged in:</span>
+        <strong id="current-user-display">admin</strong>
+      </div>
+      <a href="/" class="btn btn-secondary btn-sm" target="_blank">Open Billing Portal &rarr;</a>
+      <a href="/gate/logout" class="btn btn-outline-danger btn-sm">Log Out</a>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Nginx Status</div>
+        <div class="stat-value" id="stat-nginx-status">
+          <span class="pulse-dot"></span>
+          <span style="font-size: 1.1rem; color: var(--success);" id="stat-nginx-text">Checking...</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Sites</div>
+        <div class="stat-value" id="stat-sites">-- / --</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Configured Staff Users</div>
+        <div class="stat-value" id="stat-users">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Rate Limiting Guard</div>
+        <div class="stat-value" id="stat-security" style="color: var(--success);">0 Blocked</div>
+      </div>
+    </div>
+
+    <!-- Global Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <strong>Nginx Control:</strong>
+        <button class="btn btn-secondary btn-sm" onclick="runNginxTest()">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425z"/></svg>
+          Test Syntax (nginx -t)
+        </button>
+        <button class="btn btn-gold btn-sm" onclick="runNginxReload()">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/><path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/></svg>
+          Reload Nginx Daemon
+        </button>
+      </div>
+      <div class="action-bar-right">
+        <button class="btn btn-secondary btn-sm" onclick="openCreateSiteModal()">
+          + Add New Nginx Site
+        </button>
+        <button class="btn btn-gold btn-sm" onclick="openAddUserModal()">
+          + Add Staff User
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('nginx-tab', this)">
+        🌐 Nginx Sites (<span id="tab-site-count">0</span>)
+      </button>
+      <button class="tab-btn" onclick="switchTab('users-tab', this)">
+        👥 Staff & 2FA Accounts (<span id="tab-user-count">0</span>)
+      </button>
+      <button class="tab-btn" onclick="switchTab('security-tab', this)">
+        🛡️ Security & Brute-Force
+      </button>
+    </div>
+
+    <!-- TAB 1: Nginx Sites -->
+    <div id="nginx-tab" class="tab-content">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Site / File</th>
+              <th>Status</th>
+              <th>Domains (server_name)</th>
+              <th>Listen</th>
+              <th>Protection</th>
+              <th>Updated</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sites-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+                Loading Nginx sites...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: Users -->
+    <div id="users-tab" class="tab-content" style="display: none;">
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Role</th>
+              <th>2FA Enrollment</th>
+              <th>Last Login</th>
+              <th>Created</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody">
+            <tr>
+              <td colspan="6" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+                Loading users...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 3: Security & Rate Limits -->
+    <div id="security-tab" class="tab-content" style="display: none;">
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <h3 style="margin-bottom: 0.5rem;">Brute-Force Attack Protection</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.5;">
+          The 2FA gate monitors failed login and verification attempts. Any IP exceeding 5 failed attempts is automatically locked out for 15 minutes.
+        </p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Client IP</th>
+              <th>Failed Attempts</th>
+              <th>Status</th>
+              <th>Retry After</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="security-tbody">
+            <tr>
+              <td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted);">
+                No blocked IP addresses currently.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL: Nginx Site Editor -->
+  <div class="modal-overlay" id="edit-site-modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title" id="edit-site-title">Edit Configuration</div>
+          <div style="font-size: 0.78rem; color: var(--text-muted);" id="edit-site-subtitle">/etc/nginx/sites-available/...</div>
+        </div>
+        <button class="modal-close" onclick="closeModal('edit-site-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <div style="font-size: 0.8rem; color: var(--text-muted);">
+            Syntax safety enabled: changes are automatically tested with <font face="monospace">nginx -t</font> before applying.
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="testCurrentEditorSyntax()">
+            Verify Syntax
+          </button>
+        </div>
+        <textarea id="site-code-editor" class="form-control form-control-mono code-editor-area" spellcheck="false"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('edit-site-modal')">Cancel</button>
+        <button class="btn btn-secondary" onclick="saveSiteConfig(false)">Save Only</button>
+        <button class="btn btn-gold" onclick="saveSiteConfig(true)">Save & Reload Nginx</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Create New Site -->
+  <div class="modal-overlay" id="create-site-modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">Create New Nginx Site Configuration</div>
+        <button class="modal-close" onclick="closeModal('create-site-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Configuration File Name (e.g. pos.chettiyarkada.in)</label>
+          <input type="text" id="new-site-name" class="form-control" placeholder="billing.chettiyarkada.in">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Select Starting Template</label>
+          <select id="new-site-template" class="form-control" onchange="applyTemplate()">
+            <option value="2fa">Reverse Proxy with 2FA Gate Protection (Recommended)</option>
+            <option value="proxy">Standard Reverse Proxy (Direct frappe/node app)</option>
+            <option value="static">Static HTML / Asset Directory</option>
+            <option value="blank">Blank Server Block</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Configuration Content</label>
+          <textarea id="new-site-content" class="form-control form-control-mono code-editor-area" style="min-height: 260px;" spellcheck="false"></textarea>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <input type="checkbox" id="new-site-enable" checked>
+          <label for="new-site-enable" style="font-size: 0.85rem; cursor: pointer;">Enable immediately (symlink into sites-enabled)</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('create-site-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="submitCreateSite()">Create & Verify Site</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Add User -->
+  <div class="modal-overlay" id="add-user-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title">Add Staff User</div>
+        <button class="modal-close" onclick="closeModal('add-user-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input type="text" id="new-user-username" class="form-control" placeholder="e.g. cashier1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="new-user-password" class="form-control" placeholder="Enter secure password">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Access Role</label>
+          <select id="new-user-role" class="form-control">
+            <option value="staff">Staff (Billing Portal Only)</option>
+            <option value="admin">Administrator (Portal + Nginx Control Center)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('add-user-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="submitAddUser()">Create User & Show 2FA QR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: 2FA QR Display -->
+  <div class="modal-overlay" id="qr-modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <div class="modal-title" id="qr-modal-title">Google Authenticator Setup</div>
+        <button class="modal-close" onclick="closeModal('qr-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align: center;">
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;" id="qr-modal-desc">
+          Scan this QR code using the Google Authenticator app on staff mobile.
+        </p>
+        <div style="background: white; padding: 1rem; border-radius: 12px; display: inline-block; margin-bottom: 1rem;">
+          <img id="qr-modal-image" src="" alt="2FA QR Code" style="width: 220px; height: 220px; display: block;">
+        </div>
+        <div class="form-group" style="text-align: left;">
+          <label class="form-label">Manual Secret Key:</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="qr-modal-secret" class="form-control form-control-mono" readonly>
+            <button class="btn btn-secondary btn-sm" onclick="copySecret()">Copy</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-gold" onclick="closeModal('qr-modal')">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Change Password -->
+  <div class="modal-overlay" id="password-modal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-title">Change Password</div>
+        <button class="modal-close" onclick="closeModal('password-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="password-username">
+        <div class="form-group">
+          <label class="form-label">User: <strong id="password-user-label" style="color: var(--text);"></strong></label>
+          <input type="password" id="new-password-val" class="form-control" placeholder="Enter new password">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('password-modal')">Cancel</button>
+        <button class="btn btn-gold" onclick="submitPasswordChange()">Update Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Terminal Output -->
+  <div class="modal-overlay" id="terminal-modal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <div class="modal-title" id="terminal-modal-title">Command Execution Output</div>
+        <button class="modal-close" onclick="closeModal('terminal-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="terminal-box" id="terminal-output">Running...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('terminal-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script>
+    // State
+    let currentEditSite = null;
+    let sitesData = [];
+    let usersData = [];
+
+    // Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStatus();
+      loadSites();
+      loadUsers();
+      loadSecurity();
+      applyTemplate();
+    });
+
+    // Toast Helper
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'all 0.3s ease';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Tab Switcher
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(tabId).style.display = 'block';
+      btn.classList.add('active');
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    // Load Overview Status
+    async function loadStatus() {
+      try {
+        const res = await fetch('/gate/api/admin/nginx/status');
+        if (!res.ok) throw new Error('Failed to load Nginx status');
+        const data = await res.json();
+
+        const statusEl = document.getElementById('stat-nginx-text');
+        if (data.isRunning) {
+          statusEl.textContent = `Running (PID ${data.pid})`;
+          statusEl.style.color = 'var(--success)';
+        } else {
+          statusEl.textContent = 'Stopped / Unknown';
+          statusEl.style.color = 'var(--danger)';
+        }
+
+        document.getElementById('stat-sites').textContent = `${data.enabledCount} / ${data.sitesCount}`;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Load Nginx Sites
+    async function loadSites() {
+      try {
+        const res = await fetch('/gate/api/admin/nginx/sites');
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = '/gate/login?return_to=/gate/admin';
+          return;
+        }
+        sitesData = await res.json();
+
+        document.getElementById('tab-site-count').textContent = sitesData.length;
+        const tbody = document.getElementById('sites-tbody');
+        tbody.innerHTML = '';
+
+        if (sitesData.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem;">No sites found in /etc/nginx/sites-available</td></tr>`;
+          return;
+        }
+
+        sitesData.forEach(site => {
+          const tr = document.createElement('tr');
+
+          // Domains
+          const domains = (site.serverNames && site.serverNames.length > 0)
+            ? site.serverNames.map(d => `<span style="font-weight:600; color:var(--text);">${d}</span>`).join('<br/>')
+            : '<span style="color:var(--text-dark);">&mdash;</span>';
+
+          // Listen
+          const listens = (site.listenPorts && site.listenPorts.length > 0)
+            ? site.listenPorts.map(p => `<span class="badge badge-dark">${p}</span>`).join(' ')
+            : '<span style="color:var(--text-dark);">&mdash;</span>';
+
+          // Badges
+          let protectionBadges = '';
+          if (site.has2FA) {
+            protectionBadges += '<span class="badge badge-gold" title="2FA Google Authenticator Access Gate">🔒 2FA Gate</span> ';
+          }
+          if (site.hasSSL) {
+            protectionBadges += '<span class="badge badge-info" title="SSL / TLS Encrypted">HTTPS</span> ';
+          }
+          if (site.name.includes('.backup')) {
+            protectionBadges += '<span class="badge badge-dark">Backup</span> ';
+          }
+          if (!protectionBadges) {
+            protectionBadges = '<span style="color:var(--text-dark);">&mdash;</span>';
+          }
+
+          // Format Date
+          const updatedDate = site.updatedAt ? new Date(site.updatedAt).toLocaleDateString() : '&mdash;';
+
+          tr.innerHTML = `
+            <td>
+              <strong style="color:var(--text); font-family:var(--font-mono);">${site.name}</strong>
+              ${site.isProtected ? '<span class="badge badge-gold" style="font-size:0.65rem; margin-left:4px;">Core</span>' : ''}
+            </td>
+            <td>
+              <label class="switch">
+                <input type="checkbox" ${site.enabled ? 'checked' : ''} onchange="toggleSiteEnable('${site.name}', this.checked)">
+                <span class="slider"></span>
+              </label>
+            </td>
+            <td>${domains}</td>
+            <td>${listens}</td>
+            <td>${protectionBadges}</td>
+            <td style="color:var(--text-muted); font-size:0.8rem;">${updatedDate}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-secondary btn-sm" onclick="openEditSiteModal('${site.name}')">Edit</button>
+              ${site.isProtected ? '' : `<button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteSite('${site.name}')">Delete</button>`}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Toggle Site Enable/Disable
+    async function toggleSiteEnable(name, enable) {
+      try {
+        const res = await fetch(`/gate/api/admin/nginx/sites/${encodeURIComponent(name)}/toggle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enable })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          showToast(data.error || 'Failed to toggle site', 'error');
+          loadSites(); // Revert switch UI
+          return;
+        }
+        showToast(data.message, 'success');
+        loadStatus();
+      } catch (err) {
+        showToast(err.message, 'error');
+        loadSites();
+      }
+    }
+
+    // Open Edit Site Modal
+    async function openEditSiteModal(name) {
+      currentEditSite = name;
+      document.getElementById('edit-site-title').textContent = `Editing ${name}`;
+      document.getElementById('edit-site-subtitle').textContent = `/etc/nginx/sites-available/${name}`;
+      const editor = document.getElementById('site-code-editor');
+      editor.value = 'Loading configuration...';
+      openModal('edit-site-modal');
+
+      try {
+        const res = await fetch(`/gate/api/admin/nginx/sites/${encodeURIComponent(name)}`);
+        const data = await res.json();
+        editor.value = data.content || '';
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Verify Syntax from Editor
+    async function testCurrentEditorSyntax() {
+      showToast('Testing syntax...', 'info');
+      try {
+        const res = await fetch('/gate/api/admin/nginx/test', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Syntax OK: ' + data.output, 'success');
+        } else {
+          showToast('Syntax Error:\n' + data.output, 'error');
+        }
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Save Site Config
+    async function saveSiteConfig(autoReload) {
+      if (!currentEditSite) return;
+      const content = document.getElementById('site-code-editor').value;
+
+      try {
+        const res = await fetch(`/gate/api/admin/nginx/sites/${encodeURIComponent(currentEditSite)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content, autoReload })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          showToast(data.error || 'Syntax validation failed', 'error');
+          return;
+        }
+        showToast(data.message, 'success');
+        closeModal('edit-site-modal');
+        loadSites();
+        loadStatus();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Create Site Modal
+    function openCreateSiteModal() {
+      openModal('create-site-modal');
+    }
+
+    function applyTemplate() {
+      const tpl = document.getElementById('new-site-template').value;
+      const area = document.getElementById('new-site-content');
+
+      if (tpl === '2fa') {
+        area.value = `server {
+    listen 80;
+    listen [::]:80;
+    server_name example.chettiyarkada.in;
+
+    # 2FA Gate Subrequest Verification
+    location = /_gate/verify {
+        internal;
+        proxy_pass http://127.0.0.1:3100/gate/api/verify;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header X-Original-URI $request_uri;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Redirect unauthenticated requests to 2FA Login
+    location @gate_redirect {
+        return 302 https://$host/gate/login?return_to=$scheme://$http_host$request_uri;
+    }
+
+    location / {
+        auth_request /_gate/verify;
+        error_page 401 = @gate_redirect;
+
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+`;
+      } else if (tpl === 'proxy') {
+        area.value = `server {
+    listen 80;
+    listen [::]:80;
+    server_name example.chettiyarkada.in;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+`;
+      } else if (tpl === 'static') {
+        area.value = `server {
+    listen 80;
+    listen [::]:80;
+    server_name static.chettiyarkada.in;
+    root /var/www/html;
+    index index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+`;
+      } else {
+        area.value = `server {
+    listen 80;
+    server_name example.com;
+
+    location / {
+        # Custom directives
+    }
+}
+`;
+      }
+    }
+
+    async function submitCreateSite() {
+      const name = document.getElementById('new-site-name').value.trim();
+      const content = document.getElementById('new-site-content').value;
+      const enableImmediately = document.getElementById('new-site-enable').checked;
+
+      if (!name) {
+        showToast('Please enter a site configuration name', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/gate/api/admin/nginx/sites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, content, enableImmediately })
+        });
+        const data = await res.json();
+        if (!data.success) {
+          showToast(data.error || 'Failed to create site', 'error');
+          return;
+        }
+        showToast(data.message, 'success');
+        closeModal('create-site-modal');
+        loadSites();
+        loadStatus();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function confirmDeleteSite(name) {
+      if (!confirm(`Are you sure you want to delete "${name}"? It will be backed up to .backups/ directory.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/gate/api/admin/nginx/sites/${encodeURIComponent(name)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (!data.success) {
+          showToast(data.error || 'Failed to delete site', 'error');
+          return;
+        }
+        showToast(data.message, 'success');
+        loadSites();
+        loadStatus();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Global Test and Reload
+    async function runNginxTest() {
+      const modal = document.getElementById('terminal-modal');
+      document.getElementById('terminal-modal-title').textContent = 'Nginx Syntax Test (nginx -t)';
+      const out = document.getElementById('terminal-output');
+      out.textContent = 'Running: nginx -t ...\n';
+      openModal('terminal-modal');
+
+      try {
+        const res = await fetch('/gate/api/admin/nginx/test', { method: 'POST' });
+        const data = await res.json();
+        out.textContent = data.output || 'No output.';
+        if (data.success) {
+          showToast('Nginx syntax is valid!', 'success');
+        } else {
+          showToast('Nginx syntax errors detected!', 'error');
+        }
+      } catch (err) {
+        out.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    async function runNginxReload() {
+      if (!confirm('Reload Nginx configuration now? Active connections will not be dropped.')) {
+        return;
+      }
+      const modal = document.getElementById('terminal-modal');
+      document.getElementById('terminal-modal-title').textContent = 'Nginx Reload Output';
+      const out = document.getElementById('terminal-output');
+      out.textContent = 'Testing syntax and reloading Nginx...\n';
+      openModal('terminal-modal');
+
+      try {
+        const res = await fetch('/gate/api/admin/nginx/reload', { method: 'POST' });
+        const data = await res.json();
+        out.textContent = data.output || (data.success ? 'Nginx reloaded successfully.' : 'Reload failed.');
+        if (data.success) {
+          showToast('Nginx reloaded successfully!', 'success');
+        } else {
+          showToast('Reload failed: ' + (data.output || 'error'), 'error');
+        }
+        loadStatus();
+      } catch (err) {
+        out.textContent = 'Error: ' + err.message;
+      }
+    }
+
+    // Load Staff Users
+    async function loadUsers() {
+      try {
+        const res = await fetch('/gate/api/admin/users');
+        if (!res.ok) throw new Error('Failed to load users');
+        usersData = await res.json();
+
+        document.getElementById('stat-users').textContent = usersData.length;
+        document.getElementById('tab-user-count').textContent = usersData.length;
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = '';
+
+        usersData.forEach(u => {
+          const tr = document.createElement('tr');
+          const lastLogin = u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : 'Never';
+          const createdAt = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A';
+          const roleBadge = u.role === 'admin' 
+            ? '<span class="badge badge-gold">Administrator</span>' 
+            : '<span class="badge badge-info">Staff</span>';
+          const enrolledBadge = u.enrolled
+            ? '<span class="badge badge-success">Enrolled</span>'
+            : '<span class="badge badge-danger">Pending</span>';
+
+          tr.innerHTML = `
+            <td>
+              <strong style="color:var(--text);">${u.username}</strong>
+            </td>
+            <td>${roleBadge}</td>
+            <td>${enrolledBadge}</td>
+            <td style="color:var(--text-muted); font-size:0.8rem;">${lastLogin}</td>
+            <td style="color:var(--text-muted); font-size:0.8rem;">${createdAt}</td>
+            <td style="text-align: right; white-space: nowrap;">
+              <button class="btn btn-secondary btn-sm" onclick="resetUserTotp('${u.username}')">Reset 2FA</button>
+              <button class="btn btn-secondary btn-sm" onclick="openPasswordModal('${u.username}')">Change Password</button>
+              <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteUser('${u.username}')">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Add User Modal
+    function openAddUserModal() {
+      document.getElementById('new-user-username').value = '';
+      document.getElementById('new-user-password').value = '';
+      openModal('add-user-modal');
+    }
+
+    async function submitAddUser() {
+      const username = document.getElementById('new-user-username').value.trim();
+      const password = document.getElementById('new-user-password').value;
+      const role = document.getElementById('new-user-role').value;
+
+      if (!username || !password) {
+        showToast('Username and password are required', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/gate/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, role })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+          showToast(data.message || 'Failed to add user', 'error');
+          return;
+        }
+
+        closeModal('add-user-modal');
+        showToast(`User "${username}" created!`, 'success');
+        loadUsers();
+
+        // Show QR modal
+        showQrModal(username, data.qrDataUrl, data.secret, 'User Created — Scan in Google Authenticator');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Reset TOTP
+    async function resetUserTotp(username) {
+      if (!confirm(`Generate new Google Authenticator 2FA secret for "${username}"? Their existing authenticator code will stop working.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/gate/api/admin/users/${encodeURIComponent(username)}/reset-totp`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+          showToast(data.message || 'Failed to reset 2FA', 'error');
+          return;
+        }
+        showToast(`2FA reset for ${username}`, 'success');
+        loadUsers();
+        showQrModal(username, data.qrDataUrl, data.secret, `New 2FA QR for ${username}`);
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    function showQrModal(username, qrUrl, secret, title) {
+      document.getElementById('qr-modal-title').textContent = title;
+      document.getElementById('qr-modal-desc').textContent = `Scan this QR code using Google Authenticator for account: ${username}`;
+      document.getElementById('qr-modal-image').src = qrUrl;
+      document.getElementById('qr-modal-secret').value = secret;
+      openModal('qr-modal');
+    }
+
+    function copySecret() {
+      const secret = document.getElementById('qr-modal-secret').value;
+      navigator.clipboard.writeText(secret).then(() => {
+        showToast('Secret key copied to clipboard!', 'success');
+      });
+    }
+
+    // Password Modal
+    function openPasswordModal(username) {
+      document.getElementById('password-username').value = username;
+      document.getElementById('password-user-label').textContent = username;
+      document.getElementById('new-password-val').value = '';
+      openModal('password-modal');
+    }
+
+    async function submitPasswordChange() {
+      const username = document.getElementById('password-username').value;
+      const newPassword = document.getElementById('new-password-val').value;
+
+      if (!newPassword || newPassword.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch(`/gate/api/admin/users/${encodeURIComponent(username)}/password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: newPassword })
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+          showToast(data.message || 'Failed to update password', 'error');
+          return;
+        }
+        showToast(`Password updated for "${username}"!`, 'success');
+        closeModal('password-modal');
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function confirmDeleteUser(username) {
+      if (!confirm(`Are you sure you want to remove user "${username}"?`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/gate/api/admin/users/${encodeURIComponent(username)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.status !== 'success') {
+          showToast(data.message || 'Failed to delete user', 'error');
+          return;
+        }
+        showToast(`User "${username}" deleted`, 'success');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // Security & Rate Limits
+    async function loadSecurity() {
+      try {
+        const res = await fetch('/gate/api/admin/security/status');
+        if (!res.ok) return;
+        const list = await res.json();
+
+        const count = list.filter(i => i.locked).length;
+        document.getElementById('stat-security').textContent = `${count} Blocked`;
+        document.getElementById('stat-security').style.color = count > 0 ? 'var(--danger)' : 'var(--success)';
+
+        const tbody = document.getElementById('security-tbody');
+        tbody.innerHTML = '';
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 2rem; color:var(--text-muted);">No suspicious attempts or blocked IPs recorded.</td></tr>`;
+          return;
+        }
+
+        list.forEach(item => {
+          const tr = document.createElement('tr');
+          const status = item.locked 
+            ? '<span class="badge badge-danger">Locked Out (429)</span>' 
+            : '<span class="badge badge-gold">Warning</span>';
+
+          tr.innerHTML = `
+            <td><font face="monospace">${item.ip}</font></td>
+            <td>${item.count} / 5</td>
+            <td>${status}</td>
+            <td>${item.retryAfterSeconds > 0 ? item.retryAfterSeconds + 's' : '&mdash;'}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm" onclick="unblockIp('${item.ip}')">Unblock IP</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function unblockIp(ip) {
+      try {
+        const res = await fetch('/gate/api/admin/security/unblock', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip })
+        });
+        const data = await res.json();
+        showToast(`IP ${ip} unblocked`, 'success');
+        loadSecurity();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

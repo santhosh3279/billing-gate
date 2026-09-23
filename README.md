@@ -58,6 +58,7 @@ Designed specifically to protect internal ERPNext / Frappe billing and POS syste
   - Constant-time comparison preventing timing attacks.
 - **Selective Public Exemptions**: Supports public customer-facing routes (`/frontend/catalogueviewer`, `/files/`, `/assets/`) without prompting for staff authentication.
 - **One-Click Logout**: Revokes gate session tokens via `/gate/logout`.
+- **Web Admin Control Center (`/gate/admin`)**: Complete browser-based management dashboard for managing Nginx sites (edit configs, toggle enable/disable, syntax check, safe reload) and managing staff 2FA users (add, reset TOTP with instant QR codes, change passwords, roles).
 
 ---
 
@@ -65,13 +66,20 @@ Designed specifically to protect internal ERPNext / Frappe billing and POS syste
 
 ```
 billing-gate/
+├── Dockerfile                     # Production multi-stage Alpine container image
+├── docker-compose.yml             # Production Docker Compose orchestration
+├── docker-entrypoint.sh           # Safe privilege-drop & permission initialization
+├── gate-cli.sh                    # Helper script for containerized CLI management
+├── .dockerignore                  # Docker build context exclusions
+├── .env.example                   # Environment configuration template
 ├── cli.js                         # Staff management command-line tool
 ├── server.js                      # Core HTTP authentication service
 ├── generate_pdf.py                # PDF documentation generator (ReportLab)
 ├── package.json                   # Node.js project & dependencies
 ├── lib/
 │   ├── auth.js                    # Password hashing, token signing & rate limiting
-│   ├── db.js                      # Atomic user storage & secret management
+│   ├── db.js                      # Atomic user storage, role & secret management
+│   ├── nginx.js                   # Nginx sites parser, syntax tester & reload controller
 │   └── totp.js                    # RFC 6238 TOTP calculations & QR code generation
 ├── nginx/
 │   └── billing.chettiyarkada.in.conf # Production Nginx reverse-proxy configuration
@@ -79,72 +87,150 @@ billing-gate/
 │   ├── favicon.svg                # Portal favicon
 │   └── logo.png                   # Official Chettiyar Kada brand logo
 ├── systemd/
-│   └── billing-gate.service       # Systemd service unit definition
+│   ├── billing-gate-docker.service# Systemd service for Docker Compose mode
+│   └── billing-gate.service       # Systemd service for bare-metal Node.js
 └── views/
+    ├── admin.html                 # Complete Nginx & User Management Control Center
     └── index.html                 # Responsive 2FA landing page template
 ```
 
 ---
 
-## Quick Start & Installation
+## Production Docker Deployment (Recommended)
 
 ### 1. Prerequisites
-- Node.js >= 18
-- Nginx (compiled with `--with-http_auth_request_module`)
+- Docker (>= 20.10) & Docker Compose (v2 or `docker compose`)
+- Nginx reverse proxy on the host (with `auth_request` support)
 
-### 2. Install Dependencies
+### 2. Configure Environment
+Copy the example environment file:
 ```bash
 cd /var/www/billing-gate
-npm install
+cp .env.example .env
+```
+Default settings in `.env`:
+```env
+PORT=3100
+DATA_DIR_PATH=/var/lib/billing-gate
+```
+*Note: Pointing `DATA_DIR_PATH` to `/var/lib/billing-gate` preserves existing production accounts and signing keys without re-enrollment.*
+
+### 3. Build & Start the Container
+```bash
+docker compose up -d --build
+```
+Verify the container is healthy:
+```bash
+docker compose ps
+curl http://127.0.0.1:3100/gate/health
+# {"status":"ok","timestamp":"..."}
 ```
 
-### 3. Create First Administrator Account
-Use the CLI to create an administrator and print the Google Authenticator QR code:
+### 4. Enable Systemd Auto-Start for Docker (Optional)
+To manage the Docker Compose service via `systemctl`:
 ```bash
-node cli.js add-user admin "YourSecurePassword123!"
-```
-*Scan the generated QR code in your Google Authenticator app.*
-
-### 4. Enable and Start the Systemd Service
-```bash
-sudo cp systemd/billing-gate.service /etc/systemd/system/
+sudo cp systemd/billing-gate-docker.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable billing-gate.service
-sudo systemctl start billing-gate.service
-sudo systemctl status billing-gate.service
-```
-
-### 5. Configure Nginx
-Copy or merge the Nginx configuration:
-```bash
-sudo cp nginx/billing.chettiyarkada.in.conf /etc/nginx/sites-available/billing.chettiyarkada.in
-sudo nginx -t
-sudo systemctl reload nginx
+sudo systemctl enable billing-gate-docker.service
 ```
 
 ---
 
-## CLI Management Commands
+## Web Admin Control Center (`/gate/admin`)
 
-All staff account management can be performed from the terminal:
+Access the management dashboard in your browser:
+**`https://billing.chettiyarkada.in/gate/admin`**
 
-| Action | Command |
-|---|---|
-| **Add Staff User** | `node cli.js add-user <username> <password>` |
-| **List All Users** | `node cli.js list-users` |
-| **Reset 2FA / Re-pair** | `node cli.js reset-totp <username>` |
-| **Update Password** | `node cli.js set-password <username> <new-password>` |
-| **Delete User** | `node cli.js delete-user <username>` |
+*(Requires login with an administrator account)*
+
+### Key Capabilities
+
+1. **Nginx Reverse-Proxy Management**:
+   - **Live Daemon Monitoring**: Real-time status of Nginx daemon PID, version, and active syntax test.
+   - **Sites Overview**: Inspect domain names (`server_name`), listen ports, SSL encryption, and 2FA protection flags across all sites in `/etc/nginx/sites-available`.
+   - **Interactive Switch Toggle**: One-click enable/disable sites (automatically creates/removes symlinks in `/etc/nginx/sites-enabled` with syntax testing).
+   - **In-Browser Configuration Editor**: Edit site configurations with syntax highlighting, automatic timestamped backups, and safe rollback if `nginx -t` fails.
+   - **Create New Sites**: Start from predefined templates:
+     - *Reverse Proxy with 2FA Gate Protection*
+     - *Standard Reverse Proxy*
+     - *Static Website*
+   - **Global Nginx Actions**: One-click **Test Syntax (`nginx -t`)** and zero-downtime **Reload Daemon (`systemctl reload nginx`)**.
+
+2. **Staff & 2FA User Management**:
+   - View all registered staff accounts, roles (`Administrator` or `Staff`), enrollment status, and last login timestamps.
+   - **Add Staff User**: Form with instant on-screen Google Authenticator QR Code and copyable secret key.
+   - **Reset 2FA / Re-pair**: Re-generate TOTP secrets with instant QR display for staff onboarding.
+   - **Change Passwords**: Securely re-hash passwords with `scrypt`.
+   - **Delete Users**: Safe removal preventing self-deletion or leaving zero administrators.
+
+3. **Security & Brute-Force Monitoring**:
+   - Real-time display of IP addresses flagged or locked out by the rate limiter guard.
+   - One-click manual **Unblock IP** button.
 
 ---
 
-## Environment Variables
+## Staff Account Management (CLI)
+
+Use the `./gate-cli.sh` helper to run commands directly inside the Docker container:
+
+| Action | Docker Command | Bare-Metal Command |
+|---|---|---|
+| **Add Staff User** | `./gate-cli.sh add-user <username> <password>` | `node cli.js add-user <username> <password>` |
+| **List All Users** | `./gate-cli.sh list-users` | `node cli.js list-users` |
+| **Reset 2FA / Re-pair** | `./gate-cli.sh reset-totp <username>` | `node cli.js reset-totp <username>` |
+| **Update Password** | `./gate-cli.sh set-password <username> <new-password>` | `node cli.js set-password <username> <new-password>` |
+| **Delete User** | `./gate-cli.sh delete-user <username>` | `node cli.js delete-user <username>` |
+
+*(Alternatively, you can run `docker compose exec billing-gate node cli.js <command>`)*
+
+---
+
+## Switching From Bare-Metal (Systemd) to Docker
+
+If you currently have `billing-gate.service` running directly on the host and wish to switch to Docker:
+
+1. Stop and disable the bare-metal service:
+   ```bash
+   sudo systemctl stop billing-gate.service
+   sudo systemctl disable billing-gate.service
+   ```
+2. Start the Docker container:
+   ```bash
+   docker compose up -d
+   ```
+3. Test authentication at `https://billing.chettiyarkada.in/gate/login`.
+
+Host Nginx requires zero changes because the Docker container binds directly to `127.0.0.1:3100:3100`, matching the existing reverse proxy configuration.
+
+---
+
+## Alternative: Bare-Metal Installation (Node.js & Systemd)
+
+1. **Install Dependencies**:
+   ```bash
+   npm install --omit=dev
+   ```
+2. **Setup First Administrator**:
+   ```bash
+   node cli.js add-user admin "YourSecurePassword123!"
+   ```
+3. **Start Systemd Service**:
+   ```bash
+   sudo cp systemd/billing-gate.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now billing-gate.service
+   ```
+
+---
+
+## Environment Variables Reference
 
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `3100` | Port for the local auth gate server |
-| `HOST` | `127.0.0.1` | Binding IP address |
-| `DATA_DIR` | `/var/lib/billing-gate` | Path to persistent storage (`users.json`, `secret.key`) |
+| `HOST` | `0.0.0.0` (Docker) / `127.0.0.1` (Host) | Binding IP address |
+| `DATA_DIR` | `/var/lib/billing-gate` | Path inside container/host to persistent storage (`users.json`, `secret.key`) |
+| `DATA_DIR_PATH` | `/var/lib/billing-gate` | Host volume mount path in `docker-compose.yml` |
 | `NODE_ENV` | `production` | Node runtime environment |
 
 ---

@@ -15,7 +15,6 @@ StateDirectory=billing-gate
 ExecStart=/usr/bin/node /var/www/billing-gate/server.js
 Restart=always
 RestartSec=3
-NoNewPrivileges=true
 PrivateTmp=true
 
 [Install]

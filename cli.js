@@ -4,15 +4,16 @@ import { getUser, getUsers, saveUser, deleteUser } from './lib/db.js';
 import { hashPassword } from './lib/auth.js';
 import { generateSecret, getOtpauthUrl } from './lib/totp.js';
 
-const [,, cmd, arg1, arg2] = process.argv;
+const [,, cmd, arg1, arg2, arg3] = process.argv;
 
 async function main() {
   switch (cmd) {
     case 'add-user': {
       const username = arg1;
       const password = arg2;
+      const role = (arg3 === 'admin' || (username && username.toLowerCase() === 'admin')) ? 'admin' : 'staff';
       if (!username || !password) {
-        console.error('Usage: node cli.js add-user <username> <password>');
+        console.error('Usage: node cli.js add-user <username> <password> [admin|staff]');
         process.exit(1);
       }
       const existing = getUser(username);
@@ -29,12 +30,14 @@ async function main() {
         passwordHash: hash,
         salt,
         totpSecret: secret,
+        role,
         enrolled: true,
         createdAt: new Date().toISOString(),
       });
 
-      console.log(`\n=== User "${username}" successfully created ===\n`);
+      console.log(`\n=== User "${username}" successfully created (${role.toUpperCase()}) ===\n`);
       console.log(`Username:    ${username}`);
+      console.log(`Role:        ${role}`);
       console.log(`TOTP Secret: ${secret}\n`);
       console.log('Scan this QR code in Google Authenticator:\n');
       console.log(await QRCode.toString(otpauth, { type: 'terminal', small: true }));
@@ -51,11 +54,12 @@ async function main() {
         return;
       }
       console.log('\nConfigured Gate Users:');
-      console.log('------------------------------------------------------------');
+      console.log('--------------------------------------------------------------------------------');
       for (const u of entries) {
-        console.log(`User: ${u.username.padEnd(16)} | Enrolled: ${u.enrolled ? 'Yes' : 'No'} | Created: ${u.createdAt || 'N/A'}`);
+        const role = (u.role || (u.username.toLowerCase() === 'admin' ? 'admin' : 'staff')).toUpperCase().padEnd(6);
+        console.log(`User: ${u.username.padEnd(16)} | Role: ${role} | Enrolled: ${u.enrolled ? 'Yes' : 'No '} | Created: ${u.createdAt || 'N/A'}`);
       }
-      console.log('------------------------------------------------------------\n');
+      console.log('--------------------------------------------------------------------------------\n');
       break;
     }
 
@@ -124,11 +128,11 @@ async function main() {
 Chettiyar Kada Billing Gate CLI Tool
 
 Usage:
-  node cli.js add-user <username> <password>     Create a new staff user and show Google Authenticator QR
-  node cli.js list-users                         List all configured staff users
-  node cli.js reset-totp <username>              Generate a new Google Authenticator QR for a user
-  node cli.js set-password <username> <password> Update password for a user
-  node cli.js delete-user <username>             Remove a user
+  node cli.js add-user <username> <password> [admin|staff]  Create staff/admin and show Google Authenticator QR
+  node cli.js list-users                                    List all configured staff users and roles
+  node cli.js reset-totp <username>                         Generate a new Google Authenticator QR for a user
+  node cli.js set-password <username> <password>            Update password for a user
+  node cli.js delete-user <username>                        Remove a user
       `);
       break;
   }

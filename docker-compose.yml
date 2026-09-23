@@ -1,0 +1,35 @@
+services:
+  billing-gate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: billing-gate:latest
+    container_name: billing-gate
+    restart: unless-stopped
+    ports:
+      # Binds to 127.0.0.1 on the host to ensure only local Nginx reverse proxy can access it
+      - "127.0.0.1:${PORT:-3100}:${PORT:-3100}"
+    environment:
+      - NODE_ENV=production
+      - HOST=0.0.0.0
+      - PORT=${PORT:-3100}
+      - DATA_DIR=/var/lib/billing-gate
+    pid: "host"
+    volumes:
+      # Persistent storage for users.json and secret.key
+      - ${DATA_DIR_PATH:-./data}:/var/lib/billing-gate
+      # Nginx configuration and reload management
+      - /etc/nginx:/etc/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /run/nginx.pid:/run/nginx.pid:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || 3100) + '/gate/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
