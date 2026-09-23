@@ -351,7 +351,7 @@ def build_pdf():
         [Paragraph("Architectural Component", table_header_style), Paragraph("Production Specification & Implementation Details", table_header_style)],
         [Paragraph("<b>Base Container Image</b>", table_cell_style), Paragraph("<b>Node.js 20 LTS on Alpine Linux</b> (<font face='Courier'>node:20-alpine</font>). Total image size is ~51 MB.", table_cell_style)],
         [Paragraph("<b>Security Hardening</b>", table_cell_style), Paragraph("Runs as an unprivileged non-root user (<font face='Courier'>node</font>, UID 1000). The entrypoint script verifies data permissions and drops privileges using <font face='Courier'>su-exec</font>.", table_cell_style)],
-        [Paragraph("<b>Network Isolation</b>", table_cell_style), Paragraph("Port binding: <font face='Courier'>127.0.0.1:3100:3100</font>. The service is bound strictly to the local loopback interface on the host, ensuring it is only accessible via the Nginx reverse proxy.", table_cell_style)],
+        [Paragraph("<b>Network &amp; Port Binding</b>", table_cell_style), Paragraph("Port binding: <font face='Courier'>0.0.0.0:3100:3100</font>. Binds to all network interfaces on the host (configurable via <font face='Courier'>BIND_IP</font>), allowing both external direct access and local Nginx reverse proxy routing.", table_cell_style)],
         [Paragraph("<b>Data Persistence</b>", table_cell_style), Paragraph("Host volume mount: <font face='Courier'>/var/lib/billing-gate:/var/lib/billing-gate</font>. Stores <font face='Courier'>users.json</font> and HMAC <font face='Courier'>secret.key</font> persistently across restarts.", table_cell_style)],
         [Paragraph("<b>Nginx Management Mounts</b>", table_cell_style), Paragraph("Mounted volumes: <font face='Courier'>/etc/nginx:/etc/nginx</font>, <font face='Courier'>/etc/letsencrypt:/etc/letsencrypt:ro</font>, and shared host PID (<font face='Courier'>pid: host</font>) allowing in-container Nginx syntax checks and reloads.", table_cell_style)],
         [Paragraph("<b>Container Health Check</b>", table_cell_style), Paragraph("Native Node.js fetch healthcheck polling <font face='Courier'>http://127.0.0.1:3100/gate/health</font> every 30s.", table_cell_style)],
@@ -376,7 +376,7 @@ def build_pdf():
         "<b>A. Quick Start via Docker Compose:</b><br/>"
         "<font face='Courier'>cd /var/www/billing-gate &amp;&amp; docker compose up -d --build</font><br/><br/>"
         "<b>B. Zero-Disruption Switchover from Bare-Metal to Docker:</b><br/>"
-        "Because both the host Node.js service and the Docker container publish to <font face='Courier'>127.0.0.1:3100</font>, "
+        "Because both the host Node.js service and the Docker container publish to port <font face='Courier'>3100</font>, "
         "switching from bare-metal to Docker requires <b>zero changes</b> to Nginx configuration files:<br/>"
         "1. Stop bare-metal service: <font face='Courier'>sudo systemctl stop billing-gate.service &amp;&amp; sudo systemctl disable billing-gate.service</font><br/>"
         "2. Launch Docker Compose: <font face='Courier'>docker compose up -d</font><br/>"

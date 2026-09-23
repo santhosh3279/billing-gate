@@ -7,8 +7,8 @@ services:
     container_name: billing-gate
     restart: unless-stopped
     ports:
-      # Binds to 127.0.0.1 on the host to ensure only local Nginx reverse proxy can access it
-      - "127.0.0.1:${PORT:-3100}:${PORT:-3100}"
+      # Binds to 0.0.0.0 on the host to allow access across all network interfaces
+      - "${BIND_IP:-0.0.0.0}:${PORT:-3100}:${PORT:-3100}"
     environment:
       - NODE_ENV=production
       - HOST=0.0.0.0

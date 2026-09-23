@@ -110,6 +110,7 @@ cp .env.example .env
 ```
 Default settings in `.env`:
 ```env
+BIND_IP=0.0.0.0
 PORT=3100
 DATA_DIR_PATH=/var/lib/billing-gate
 ```
@@ -200,7 +201,7 @@ If you currently have `billing-gate.service` running directly on the host and wi
    ```
 3. Test authentication at `https://billing.chettiyarkada.in/gate/login`.
 
-Host Nginx requires zero changes because the Docker container binds directly to `127.0.0.1:3100:3100`, matching the existing reverse proxy configuration.
+Host Nginx requires zero changes because the Docker container binds to port 3100 (`0.0.0.0:3100:3100`), matching the existing reverse proxy configuration.
 
 ---
 
@@ -227,6 +228,7 @@ Host Nginx requires zero changes because the Docker container binds directly to 
 
 | Variable | Default | Description |
 |---|---|---|
+| `BIND_IP` | `0.0.0.0` | Host IP interface binding in `docker-compose.yml` (`0.0.0.0` for all interfaces) |
 | `PORT` | `3100` | Port for the local auth gate server |
 | `HOST` | `0.0.0.0` (Docker) / `127.0.0.1` (Host) | Binding IP address |
 | `DATA_DIR` | `/var/lib/billing-gate` | Path inside container/host to persistent storage (`users.json`, `secret.key`) |
