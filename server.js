@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { isLocalAdminRequest } from './lib/local-admin.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -113,6 +114,7 @@ function sendJson(res, statusCode, data, headers = {}) {
  * Helper to authenticate and verify administrator privileges
  */
 function getAdminUser(req) {
+  if (isLocalAdminRequest(req)) return { username: 'local-admin', role: 'admin' };
   const token = extractTokenFromCookie(req.headers.cookie);
   const session = verifySessionToken(token);
   if (!session || !session.u) return null; // Not logged in

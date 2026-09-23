@@ -144,6 +144,16 @@ Access the management dashboard in your browser:
 
 *(Requires login with an administrator account)*
 
+Direct local access: **http://127.0.0.1:3100/gate/admin** grants administrator
+access without a password or 2FA, including management APIs. This trusts users
+and processes on the server. Public/proxied access still requires administrator
+login with 2FA. Cross-origin browser requests do not qualify. Billing portal
+authentication is unchanged.
+
+From another computer, use `ssh -N -L 3100:127.0.0.1:3100 user@your-server`
+and open the localhost URL. Restart the Node service after updating the code
+(`sudo systemctl restart billing-gate` for systemd installations).
+
 ### Key Capabilities
 
 1. **Nginx Reverse-Proxy Management**:

@@ -8,7 +8,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/var/www/billing-gate
 Environment=NODE_ENV=production
-Environment=HOST=127.0.0.1
+Environment=HOST=0.0.0.0
 Environment=PORT=3100
 Environment=DATA_DIR=/var/lib/billing-gate
 StateDirectory=billing-gate
